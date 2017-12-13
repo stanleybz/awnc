@@ -2,8 +2,6 @@ import requests
 from firebase import firebase
 from bs4 import BeautifulSoup
 from time import sleep
-import html2text
-import simplejson
 
 class Main:
 
@@ -28,9 +26,11 @@ class Main:
                 articles = soup.find_all('article')
                 for theArticle in articles:
                     readMore = theArticle.find('div', class_='read-more')
+                    thumb = theArticle.find('img')
+                    
                     theLink = readMore.find('a', href=True)
                     self.crawContent(theLink['href'])
-                    
+
     def crawContent(self, url):
         # print(link)
         response = requests.get('https://www.awn.com' + str(url))
@@ -84,8 +84,7 @@ class Main:
             theTag = tag.find('a').getText().lstrip()
             allTags.append(theTag)
         # print(allTags)
-        
-        # print(simplejson.encoder.JSONEncoderForHTML().encode(str(submitted)))
+
         result = self.firebase.post('/', {\
                     'url':url,\
                     'title':title,\
@@ -94,8 +93,13 @@ class Main:
                     'body':str(body),\
                     'allTags':allTags,\
                 })
-        print('done ' + str(url)) 
+        print('done ' + str(url))
+
+    def getFromFirebase(self):
+        result = self.firebase.get('/', None)
+
+
 
 main = Main()
 main.getArticleUrl()
-# main.getAllRow()
+# main.getFromFirebase()
