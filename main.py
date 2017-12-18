@@ -1,4 +1,5 @@
 import requests
+import urllib2
 from firebase import firebase
 from bs4 import BeautifulSoup
 from time import sleep
@@ -6,16 +7,10 @@ from time import sleep
 class Main:
 
     def __init__(self):
-        self.firebase = firebase.FirebaseApplication('https://firebaseio.com/', authentication=None)
-
-    # def getAllRow(self):
-    #     for key in self.r.scan_iter("*"):
-    #         # delete the key
-    #         print(key)
-
+        self.firebase = firebase.FirebaseApplication('https://awn-china-articles.firebaseio.com/', authentication=None)
 
     def getArticleUrl(self):
-        cats = ['animationworld', 'vfxworld']
+        cats = ['home', 'news', 'blogs', 'animationworld', 'vfxworld']
         for i in range(len(cats)):
             theCat = cats[i]
             for x in range(0, 5):
@@ -25,16 +20,31 @@ class Main:
                 soup = BeautifulSoup(response.text, 'lxml')
                 articles = soup.find_all('article')
                 for theArticle in articles:
-                    readMore = theArticle.find('div', class_='read-more')
-                    thumb = theArticle.find('img')
-                    
-                    theLink = readMore.find('a', href=True)
-                    self.crawContent(theLink['href'])
+                    try:
+                        readMore = theArticle.find('div', class_='read-more')
+                        thumb = theArticle.find('img')['src']
+                        theLink = readMore.find('a', href=True)['href']
+                        slug = theLink.split('/')[len(theLink.split('/'))-1]
 
-    def crawContent(self, url):
+                        filehandle = urllib2.urlopen(thumb)
+                        with open('img/' + slug + '.jpeg','wb') as output:
+                          output.write(filehandle.read())
+
+                        self.crawContent(theLink, slug, thumb, theCat)
+                        exit()
+                    except Exception as e:
+                        print(e)
+
+    def crawContent(self, url, slug, thumb, mainTag):
         # print(link)
         response = requests.get('https://www.awn.com' + str(url))
         soup = BeautifulSoup(response.text, 'lxml')
+
+        #
+        # Get title
+        #
+        author = soup.find('a', class_='username').getText().lstrip()
+        # print(author)
 
         #
         # Get title
@@ -62,8 +72,8 @@ class Main:
         # Get submitted
         #
         submitted = article.find('footer', {'class': 'submitted'})
-        # print(submitted)
-
+        date = submitted.getText().lstrip().split('|')[1].lower().split('in')[0]
+        exit()
         #
         # Get body
         #
@@ -92,6 +102,11 @@ class Main:
                     'submitted':str(submitted),\
                     'body':str(body),\
                     'allTags':allTags,\
+                    'thumb':thumb,\
+                    'mainTag':mainTag,\
+                    'author':author,\
+                    'date':date,\
+                    'slug':slug\
                 })
         print('done ' + str(url))
 
