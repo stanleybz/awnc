@@ -7,7 +7,7 @@ from time import sleep
 class Main:
 
     def __init__(self):
-        self.firebase = firebase.FirebaseApplication('https://awn-china-articles.firebaseio.com/', authentication=None)
+        self.firebase = firebase.FirebaseApplication('https://firebaseio.com/', authentication=None)
 
     def getArticleUrl(self):
         cats = ['home', 'news', 'blogs', 'animationworld', 'vfxworld']
@@ -30,12 +30,11 @@ class Main:
                         with open('img/' + slug + '.jpeg','wb') as output:
                           output.write(filehandle.read())
 
-                        self.crawContent(theLink, slug, thumb, theCat)
-                        exit()
+                        self.crawContent(theLink, slug, thumb, theCat, cats[i])
                     except Exception as e:
                         print(e)
 
-    def crawContent(self, url, slug, thumb, mainTag):
+    def crawContent(self, url, slug, thumb, mainTag, showAt):
         # print(link)
         response = requests.get('https://www.awn.com' + str(url))
         soup = BeautifulSoup(response.text, 'lxml')
@@ -73,7 +72,6 @@ class Main:
         #
         submitted = article.find('footer', {'class': 'submitted'})
         date = submitted.getText().lstrip().split('|')[1].lower().split('in')[0]
-        exit()
         #
         # Get body
         #
@@ -106,7 +104,8 @@ class Main:
                     'mainTag':mainTag,\
                     'author':author,\
                     'date':date,\
-                    'slug':slug\
+                    'slug':slug,\
+                    'showAt':showAt\
                 })
         print('done ' + str(url))
 
